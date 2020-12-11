@@ -1,0 +1,18 @@
+Rift
+App ID：3479570432093812
+App Secret：370036b45d9a9552b66e5deb7107e9dd
+User ID：3101465493224446
+User Token：OCAf5fO1QZAZBMZBg4gjCQKFBliiaMGdwnmw14Go3rKIKwXOVFFd6dHSRmijd9ZAzR72wfch7zhI7GCsdjvFksAgSRGuso1XYZD
+
+Inter i5-4590 equivalent or greater ，NVIDIA GTX 970/290
+
+
+
+
+
+
+
+
+
+
+

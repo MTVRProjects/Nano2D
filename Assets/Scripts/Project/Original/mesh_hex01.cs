@@ -1,0 +1,242 @@
+﻿////////////////////////////////////////
+// author: Yu (Eric) Zhu              //
+// email:  bluegenemontreal@gmail.com //
+// date:   June 6, 2020               //
+////////////////////////////////////////
+
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
+using HMLFramwork.Singleton;
+
+public class mesh_hex01:SingleInstance<mesh_hex01>
+{
+    public List<float[,]> BZ_to_FEM(List<float[,]> data_BZ, int n1, int n2, Vector3 v1, Vector3 v2)
+    {
+        if (n1 != n2)
+        {
+            throw new System.ArgumentException("n1 != n2", "n1, n2");
+        }
+        int n_band = data_BZ.Count;
+        int n_FEM = 3 * n1 * n2;  //each of triangle A and triangle B has n1*n2 small triangles 
+        List<float[,]> data_FEM = new List<float[,]>();
+        var tuple = make_FEM_hex01(n1);
+        int[] FEM_index_listA = tuple.Item1;
+        int[] FEM_index_listB = tuple.Item2;
+        for (int nn = 0; nn < n_band; nn++)
+        {
+            float[,] data_BZ_n = data_BZ[nn];
+            float[,] data_FEM_nA = new float[n_FEM, 3];
+            float[,] data_FEM_nB = new float[n_FEM, 3];
+            for (int i = 0; i < n_FEM; i++)
+            {
+                data_FEM_nA[i, 0] = data_BZ_n[FEM_index_listA[i], 0];
+                data_FEM_nA[i, 1] = data_BZ_n[FEM_index_listA[i], 1];
+                data_FEM_nA[i, 2] = data_BZ_n[FEM_index_listA[i], 2];
+                data_FEM_nB[i, 0] = data_BZ_n[FEM_index_listB[i], 0];
+                data_FEM_nB[i, 1] = data_BZ_n[FEM_index_listB[i], 1];
+                data_FEM_nB[i, 2] = data_BZ_n[FEM_index_listB[i], 2];
+            }
+            float[,] data_FEM_n_ext = extendBZ(data_FEM_nA, data_FEM_nB, v1, v2);
+            data_FEM.Add(data_FEM_n_ext);
+        }
+        return data_FEM;
+    }
+
+    float[,] extendBZ(float[,] data_FEM_A, float[,] data_FEM_B, Vector3 v1, Vector3 v2)
+    {
+        int n_BZ = 3;
+        int n_FEM = data_FEM_A.GetLength(0);
+        float[,] data_FEM_new = new float[2*n_BZ*n_FEM, 3];
+        int[][] displacement_list = new int[][] {
+            new int[] { 0, 0 },
+            new int[] { -1, 0 },
+            new int[] { -1, 0 },
+            new int[] { 0, -1 },
+            new int[] { 0, -1 },
+            new int[] { -1, -1 }};
+        int Mod(int a, int b) { return (a % b + b) % b; }
+        for (int i = 0; i < displacement_list.Length; i++)
+        {
+            int i1 = displacement_list[i][0];
+            int i2 = displacement_list[i][1];
+            Vector3 delta = i1 * v1 + i2 * v2;
+            if (Mod(i, 2) == 0)
+            {
+                for (int k = 0; k < n_FEM; k++)
+                {
+                    data_FEM_new[i * n_FEM + k, 0] = data_FEM_A[k, 0] + delta.x;
+                    data_FEM_new[i * n_FEM + k, 1] = data_FEM_A[k, 1] + delta.y;
+                    data_FEM_new[i * n_FEM + k, 2] = data_FEM_A[k, 2];
+                }
+            }
+            else
+            {
+                for (int k = 0; k < n_FEM; k++)
+                {
+                    data_FEM_new[i * n_FEM + k, 0] = data_FEM_B[k, 0] + delta.x;
+                    data_FEM_new[i * n_FEM + k, 1] = data_FEM_B[k, 1] + delta.y;
+                    data_FEM_new[i * n_FEM + k, 2] = data_FEM_B[k, 2];
+                }
+            }
+        }
+        return data_FEM_new;
+    }
+
+    //comment: generate triangular meshes for upper and lower hexagonal unitcell
+    //example: n = 2
+    //     7 - 8 - 9
+    //    / \ / \ /
+    //   4 - 5 - 6
+    //  / \ / \ /
+    // 1 - 2 - 3
+    //index_listA: [1,2,4, 2,3,5, 4,5,2, 4,5,7]
+    //index_listB: [9,8,6, 8,7,5, 6,5,8, 6,5,3]
+    Tuple<int[], int[]> make_FEM_hex01(int n)
+    {
+        int[] index_list = new int[3*n*n];
+        int[] index_listA = new int[3*n*n];
+        int[] index_listB = new int[3*n*n];
+        int counter = -1;
+        for (int ii=1; ii<=n; ii++)
+        {
+            int ind1 = 1 + (ii - 1) * (n + 1);
+            int ind2 = 1 + ii * (n + 1);
+            for (int jj=1; jj<=n-ii+1; jj++)
+            {
+                index_list[counter + 3 * (jj - 1) + 1] = ind1 + (jj - 1);
+                index_list[counter + 3 * (jj - 1) + 2] = ind1 + (jj - 1) + 1;
+                index_list[counter + 3 * (jj - 1) + 3] = ind2 + (jj - 1);
+            }
+            counter = counter + 3 * (n - ii + 1);
+            for (int jj=1; jj<=n-ii; jj++)
+            {
+                index_list[counter + 3 * (jj - 1) + 1] = ind2 + (jj - 1);
+                index_list[counter + 3 * (jj - 1) + 2] = ind2 + (jj - 1) + 1;
+                index_list[counter + 3 * (jj - 1) + 3] = ind1 + (jj - 1) + 1;
+            }
+            counter = counter + 3 * (n - ii);
+        }
+        for (int i=0; i<3*n*n; i++)
+        {
+            index_listA[i] = index_list[i] - 1;
+            index_listB[i] = 1 + (n+1)*(n+1) - index_list[i] - 1;
+        }
+        return new Tuple<int[], int[]>(index_listA, index_listB);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //List<float[,]> data_FEM;
+    //data_FEM = data_BZ;
+
+
+
+
+    //foreach (int ind in index_listA)
+    //{
+    //    Debug.Log("hex01 A: " + ind);
+    //}
+    //foreach (int ind in index_listB)
+    //{
+    //    Debug.Log("hex01 B: " + ind);
+    //}
+    ////Debug.Log("index_listA: " + index_listA);
+    ////Debug.Log("index_listA: " + index_listB);
+    ////Debug.Log("N1 = " + tuple.Item1.Length);
+    ////Debug.Log("N2 = " + tuple.Item2.Length);
+    ////var xxx = f(1, 2);
+    ////Debug.Log(xxx.Item1);
+    ////Debug.Log(xxx.Item2);
+
+
+    //return data_FEM;
+
+
+    //{[0,0], [-1,0], [-1,0], [0,-1], [0,-1], [-1,-1]};
+    //displacement_list[0] = new int[] { 0, 0 };
+    //displacement_list[1] = new int[] { -1, 0 };
+    //displacement_list[2] = new int[] { -1, 0 };
+    //displacement_list[3] = new int[] { 0, -1 };
+    //displacement_list[4] = new int[] { 0, -1 };
+    //displacement_list[5] = new int[] { -1, -1 };
+    //Tuple<int, int> MultipleReturns(int a, int b)
+    //{
+    //    return new Tuple<int, int>(a + b, a - b);
+    //}
+
+    //public Tuple<int, int> MultipleReturns(int a, int b)
+    //{
+    //    int min, max;
+    //    if (a > b)
+    //    {
+    //        max = a;
+    //        min = b;
+    //    }
+    //    else
+    //    {
+    //        max = b;
+    //        min = a;
+    //    }
+    //    return new Tuple<int, int>(min, max);
+    //}
+    //Tuple<int, int> f(int a, int b)
+    //{
+    //    return new Tuple<int, int>(a + b, a - b);
+    //}
+
+
+    ///
+    //        index_list = zeros(1, 3 * n ^ 2);
+    //        counter = 0;
+    //        for ii = 1:n
+
+    //            ind1 = 1 + (ii - 1) * (n + 1);
+    //            ind2 = 1 + ii * (n + 1);
+    //            indices1 = ind1 : ind1 + n - ii + 1;
+    //        indices2 = ind2 : ind2 + n - ii;
+    //        for jj = 1:n - ii + 1
+
+    //            index_list(counter + 3 * (jj - 1) + 1) = indices1(jj);
+    //            index_list(counter + 3 * (jj - 1) + 2) = indices1(jj + 1);
+    //            index_list(counter + 3 * (jj - 1) + 3) = indices2(jj);
+    //        end % jj
+    //        counter = counter + 3 * (n - ii + 1);
+    //        for jj = 1:n - ii
+
+    //            index_list(counter + 3 * (jj - 1) + 1) = indices2(jj);
+    //            index_list(counter + 3 * (jj - 1) + 2) = indices2(jj + 1);
+    //            index_list(counter + 3 * (jj - 1) + 3) = indices1(jj + 1);
+    //        end % jj
+    //        counter = counter + 3 * (n - ii);
+    //        end % ii
+    //        index_listA = index_list;
+    //        index_listB = 1 + (n + 1) ^ 2 - index_list;
+
+
+    //function[index_listA, index_listB] = make_FEM_hex01(n)
+
+    //    index_list = zeros(1, 3*n^2);
+    //    counter = 0;
+    //for ii = 1:n
+    //    ind1 = 1 + (ii - 1) * (n + 1);
+    //    ind2 = 1 + ii* (n+1);
+    //    indices1 = ind1 : ind1 + n-ii + 1;
+    //    indices2 = ind2 : ind2 + n-ii;
+    //    for jj = 1:n-ii+1
+    //        index_list(counter+3*(jj-1)+1) = indices1(jj);
+    //    index_list(counter+3*(jj-1)+2) = indices1(jj+1);
+    //    index_list(counter+3*(jj-1)+3) = indices2(jj);
+    //    end %jj
+    //    counter = counter + 3 * (n - ii + 1);
+    //    for jj = 1:n-ii
+    //        index_list(counter+3*(jj-1)+1) = indices2(jj);
+    //    index_list(counter+3*(jj-1)+2) = indices2(jj+1);
+    //    index_list(counter+3*(jj-1)+3) = indices1(jj+1);
+    //    end %jj
+    //    counter = counter + 3 * (n - ii);
+    //    end %ii
+    //    index_listA = index_list;
+    //    index_listB = 1 + (n+1)^2 - index_list;
+    //end %make_FEM_hex01
+}
