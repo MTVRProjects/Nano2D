@@ -131,8 +131,8 @@ GameObject:
   m_Component:
   - component: {fileID: 55637609}
   - component: {fileID: 55637608}
-  - component: {fileID: 55637607}
   - component: {fileID: 55637606}
+  - component: {fileID: 55637607}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -929,7 +929,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9471cc727c86c34cafda73e4ceb777b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isPersistentData: 1
+  isPersistentData: 0
   DataPath_persistent: /database04_MaterialsCloud/phonons_data/
   supercell_M1: 6
   supercell_M2: 6
@@ -3312,6 +3312,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 894789026}
+  - component: {fileID: 894789027}
   m_Layer: 0
   m_Name: plot_phonon_modes
   m_TagString: Untagged
@@ -3333,6 +3334,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
+--- !u!114 &894789027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 894789025}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9471cc727c86c34cafda73e4ceb777b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isPersistentData: 0
+  DataPath_persistent: /database04_MaterialsCloud/phonons_data/
+  supercell_M1: 6
+  supercell_M2: 6
+  deltaR: 0.6
+  r_bond: 0.3
+  r_sphere: 1
 --- !u!1 &904842401
 GameObject:
   m_ObjectHideFlags: 0
@@ -6695,7 +6715,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1955735572}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_ClearFlags: 4
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
